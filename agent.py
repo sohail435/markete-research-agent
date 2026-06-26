@@ -11,7 +11,9 @@ api_key = os.environ.get("GEMINI_API_KEY")
 
 # Initialize the client with our secure API key
 client = genai.Client(api_key=api_key)
-def analyze_competitor_data(raw_html_text):
+
+# 🌟 PRESERVED BRAND NAME FUNCTION
+def analyze_market_data(raw_html_text):
     # 1. Define our targeted instructions
     analysis_prompt = f"""
     You are an expert market research assistant. 
@@ -33,15 +35,40 @@ def analyze_competitor_data(raw_html_text):
     
     # 3. Return the AI's analysis
     return response.text
+
+# 💬 NEW FOR V1.2.0: Follow-up Chat Function using your existing client
+def chat_with_report(report_context, user_question):
+    """
+    Sends the user's follow-up question to Gemini along with the 
+    previously generated market report to serve as context.
+    """
+    prompt = f"""
+    You are an expert market research assistant. You previously generated the following market report:
+    
+    ---
+    {report_context}
+    ---
+    
+    Based strictly on the report context provided above, please answer the following follow-up user question. 
+    If the answer cannot be inferred from the report, state that you don't have that specific data but provide a helpful, relevant marketing perspective.
+    
+    User Question: {user_question}
+    """
+    
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=prompt
+    )
+    return response.text
+
 if __name__ == "__main__":
-    # A test URL (you can replace this with a real competitor site later)
     target_url = "https://example.com" 
     
     print("Fetching data...")
     raw_data = fetch_market_data(target_url)
     
     print("Analyzing data with Gemini...")
-    analysis_result = analyze_competitor_data(raw_data)
+    analysis_result = analyze_market_data(raw_data)
     
     print("\n--- Market Intelligence Report ---")
     print(analysis_result)
