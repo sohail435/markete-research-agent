@@ -1,7 +1,10 @@
 import streamlit as st
+from fpdf import FPDF
+from io import BytesIO
 from scraper import fetch_market_data
 from agent import analyze_market_data, chat_with_report
 
+st.set_page_config(page_title="Market Research Agent", page_icon="🚀")
 st.title("🚀 Automated Market Research Agent")
 st.write("This intelligent agent scrapes a competitor's website text and uses Gemini 2.5 Flash to generate deep marketing insights.")
 
@@ -15,6 +18,23 @@ if "current_url" not in st.session_state:
     st.session_state.current_url = ""
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+
+def generate_pdf(text):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    # Adding a basic header
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(200, 10, txt="Market Intelligence Report", ln=True, align='C')
+    pdf.ln(10)
+    pdf.set_font("Arial", size=12)
+    
+    # Use multi_cell to handle text. 
+    # Note: fpdf2 handles standard strings directly.
+    pdf.multi_cell(0, 10, txt=text)
+    
+    # FIX: Output returns bytes directly when dest='S', so no need to encode.
+    return pdf.output(dest='S')
 
 # Trigger analysis only if the button is clicked
 if st.button("Generate Market Insights"):
@@ -42,6 +62,15 @@ if st.button("Generate Market Insights"):
 # STEP 3: Display the saved report if it exists in memory
 if st.session_state.market_report:
     st.success("Analysis Complete!")
+    
+    # PDF Download Button
+    pdf_data = generate_pdf(st.session_state.market_report)
+    st.download_button(
+    label="Download Report as PDF 📄",
+    data=bytes(pdf_data),  # Convert to immutable bytes
+    file_name="report.pdf",
+    mime="application/pdf"
+)
     st.markdown("---")
     st.markdown(st.session_state.market_report)
     st.markdown("---")
